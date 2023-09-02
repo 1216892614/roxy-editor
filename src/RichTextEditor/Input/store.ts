@@ -29,38 +29,28 @@ export const strA: Atom<Str> = atom({
     ],
 });
 
-interface textCursor {
-    anchor: number;
-    focus: number;
-    left: number;
-    right: number;
-}
-
 export const textCursorA = (() => {
     const textCursorAnchorA = atom(0);
     const textCursorFocusA = atom(0);
 
     return atom(
-        (get) =>
-            ({
-                anchor: get(textCursorAnchorA),
-                focus: get(textCursorFocusA),
-                left: λ.min(get(textCursorAnchorA), get(textCursorFocusA)),
-                right: λ.max(get(textCursorAnchorA), get(textCursorFocusA)),
-            } as textCursor),
-        (get, set, newPrice: textCursor) => {
-            const { anchor, focus, left, right } = newPrice;
-
+        (get) => ({
+            anchor: get(textCursorAnchorA),
+            focus: get(textCursorFocusA),
+            left: λ.min(get(textCursorAnchorA), get(textCursorFocusA)),
+            right: λ.max(get(textCursorAnchorA), get(textCursorFocusA)),
+        }),
+        (
+            _get,
+            set,
+            newPrice: {
+                anchor: number;
+                focus: number;
+            }
+        ) => {
+            const { anchor, focus } = newPrice;
             set(textCursorAnchorA, anchor);
             set(textCursorFocusA, focus);
-
-            if (get(textCursorAnchorA) < get(textCursorFocusA)) {
-                set(textCursorAnchorA, left);
-                set(textCursorFocusA, right);
-            } else {
-                set(textCursorAnchorA, right);
-                set(textCursorFocusA, left);
-            }
         }
     );
 })();
