@@ -1,18 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback } from "react";
 import useOnKeyDown from "./useOnKeyDown";
-import { useAtom, useAtomValue } from "jotai";
-import { type Char, textCursorA, strA } from "./store";
-import * as λ from "ramda";
+import { useAtom } from "jotai";
+import { type Char, strA } from "./store";
 import useOnSelect from "./useOnSelect";
 
 const Input: React.FC<{
     modifiers: ((
         trigger: () => void
     ) => (char: Char) => { style: React.CSSProperties; char?: Char })[];
-}> = (props) => {
-    const str = useAtomValue(strA);
+}> = ({ modifiers }) => {
+    const [str, setStr] = useAtom(strA);
 
-    const [elRef, onSelect] = useOnSelect();
+    const [divRef, onSelect] = useOnSelect();
 
     const onInput = useCallback((evt: React.FormEvent<HTMLDivElement>) => {
         console.log(evt.currentTarget.textContent);
@@ -34,8 +33,8 @@ const Input: React.FC<{
         <div
             suppressContentEditableWarning={true}
             contentEditable="true"
-            className=" outline-none rounded-b-md w-full py-2 pr-2 p-2 shadow-inner"
-            ref={elRef}
+            className=" outline-none rounded-b-md w-full py-2 pr-2 p-2 shadow-inner "
+            ref={divRef}
             onSelect={onSelect}
             onInput={onInput}
             onKeyDown={onKeyDown}
@@ -43,7 +42,15 @@ const Input: React.FC<{
             onFocus={onFocus}
         >
             {str.charList.map((c, i) => (
-                <span key={i}>{c.value}</span>
+                <span
+                    key={i}
+                    className=" whitespace-pre"
+                    // style={
+                    //     i === 0 ? { height: 0, width: 0, fontSize: 0 } : void 0
+                    // }
+                >
+                    {c.value}
+                </span>
             ))}
         </div>
     );
