@@ -1,5 +1,4 @@
 import { Atom, atom } from "jotai";
-import * as λ from "ramda";
 
 export interface Char {
     value: string;
@@ -28,29 +27,3 @@ export const strA: Atom<Str> = atom({
         },
     ],
 });
-
-export const textCursorA = (() => {
-    const textCursorAnchorA = atom(0);
-    const textCursorFocusA = atom(0);
-
-    return atom(
-        (get) => ({
-            anchor: get(textCursorAnchorA),
-            focus: get(textCursorFocusA),
-            left: λ.min(get(textCursorAnchorA), get(textCursorFocusA)),
-            right: λ.max(get(textCursorAnchorA), get(textCursorFocusA)),
-        }),
-        (
-            _get,
-            set,
-            newPrice: {
-                anchor: number;
-                focus: number;
-            }
-        ) => {
-            const { anchor, focus } = newPrice;
-            set(textCursorAnchorA, anchor);
-            set(textCursorFocusA, focus);
-        }
-    );
-})();

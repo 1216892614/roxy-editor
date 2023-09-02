@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { atom } from "jotai";
+import * as λ from "ramda";
 
 import { useAtom } from "jotai";
-import { textCursorA } from "./store";
 import * as React from "react";
 
 export default (divRef: React.RefObject<HTMLDivElement>): (() => void) => {
-    const [textCursor, setTextCursor] = useAtom(textCursorA);
+    const [textCursor, setTextCursor] = useAtom(textCursorStaticA);
 
     const [selection, setSelection] = useState(window.getSelection());
 
@@ -43,7 +44,12 @@ export default (divRef: React.RefObject<HTMLDivElement>): (() => void) => {
             anchor: fixRangeIdx(anchorFact),
             focus: fixRangeIdx(focusFact),
         });
-    }, [selection, setTextCursor]);
+    }, [
+        divRef,
+        selection?.anchorNode?.parentElement,
+        selection?.focusNode?.parentElement,
+        setTextCursor,
+    ]);
 
     useEffect(() => {
         if (
@@ -90,3 +96,29 @@ export default (divRef: React.RefObject<HTMLDivElement>): (() => void) => {
 
     return onSelect;
 };
+
+const textCursorStaticA = (() => {
+    const textCursorAnchorA = atom(0);
+    const textCursorFocusA = atom(0);
+
+    return atom(
+        (get) => ({
+            anchor: get(textCursorAnchorA),
+            focus: get(textCursorFocusA),
+            left: λ.min(get(textCursorAnchorA), get(textCursorFocusA)),
+            right: λ.max(get(textCursorAnchorA), get(textCursorFocusA)),
+        }),
+        (
+            _get,
+            set,
+            newPrice: {
+                anchor: number;
+                focus: number;
+            }
+        ) => {
+            const { anchor, focus } = newPrice;
+            set(textCursorAnchorA, anchor);
+            set(textCursorFocusA, focus);
+        }
+    );
+})();
