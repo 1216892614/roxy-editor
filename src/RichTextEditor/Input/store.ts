@@ -1,5 +1,4 @@
 import { Atom, atom } from "jotai";
-import { type } from "os";
 
 export interface Char {
     value: string;
