@@ -2,10 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAtom } from "jotai";
 import { textCursorA } from "./store";
+import * as React from "react";
 
-export default (): [React.RefObject<HTMLDivElement>, () => void] => {
-    const divRef = useRef<HTMLDivElement>(null);
-
+export default (divRef: React.RefObject<HTMLDivElement>): (() => void) => {
     const [textCursor, setTextCursor] = useAtom(textCursorA);
 
     const [selection, setSelection] = useState(window.getSelection());
@@ -14,39 +13,52 @@ export default (): [React.RefObject<HTMLDivElement>, () => void] => {
         if (!divRef?.current) return;
 
         const el = divRef.current;
-        const tmp = textCursor;
 
         const anchorNodeParentElement = selection?.anchorNode?.parentElement;
         const focusNodeParentElement = selection?.focusNode?.parentElement;
 
         if (!anchorNodeParentElement || !focusNodeParentElement) return;
 
-        tmp.anchor = Array.prototype.indexOf.call(
+        const anchorFact = Array.prototype.indexOf.call(
             el.childNodes,
             anchorNodeParentElement
         );
 
-        tmp.focus = Array.prototype.indexOf.call(
+        const focusFact = Array.prototype.indexOf.call(
             el.childNodes,
             focusNodeParentElement
         );
 
-        setTextCursor(tmp);
-    }, [
-        selection?.anchorNode?.parentElement,
-        selection?.focusNode?.parentElement,
-        setTextCursor,
-        textCursor,
-    ]);
+        const isWithPadding = Boolean(
+            (el.firstChild as HTMLSpanElement).getAttribute("padding-node")
+        );
+
+        const fixRangeIdx = (fact: number) => {
+            if (fact === -1) return 0;
+            if (!isWithPadding) return fact + 1;
+            return fact;
+        };
+
+        setTextCursor({
+            anchor: fixRangeIdx(anchorFact),
+            focus: fixRangeIdx(focusFact),
+        });
+    }, [selection, setTextCursor]);
 
     useEffect(() => {
-        if (!divRef?.current || !divRef.current.children[0]) return;
+        if (
+            !divRef?.current ||
+            !divRef.current.children[0] ||
+            textCursor.left === 0 ||
+            selection?.toString() !== ""
+        )
+            return;
+
         const el = divRef.current;
 
         const padding = document.createElement("span");
-        padding.innerHTML = `<span style="white-space: pre;">${decodeURIComponent(
-            "%E2%80%8B"
-        )}</span>`;
+        padding.setAttribute("padding-node", "true");
+        padding.innerHTML = decodeURIComponent("%E2%80%8B");
         el.insertBefore(padding, el.children[0]);
 
         if (Object.values(textCursor).includes(-1)) {
@@ -57,7 +69,7 @@ export default (): [React.RefObject<HTMLDivElement>, () => void] => {
         return () => {
             el.removeChild(padding);
         };
-    }, [textCursor, textCursor.anchor, textCursor.focus]);
+    }, [divRef, selection, textCursor, textCursor.anchor, textCursor.focus]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -74,5 +86,7 @@ export default (): [React.RefObject<HTMLDivElement>, () => void] => {
         return () => controller.abort();
     }, []);
 
-    return [divRef, onSelect];
+    console.log(Object.values(textCursor), selection?.toString());
+
+    return onSelect;
 };

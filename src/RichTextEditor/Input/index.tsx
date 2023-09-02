@@ -1,6 +1,6 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import useOnKeyDown from "./useOnKeyDown";
-import { useAtom } from "jotai";
+import { useAtomValue } from "jotai";
 import { type Char, strA } from "./store";
 import useOnSelect from "./useOnSelect";
 
@@ -9,9 +9,11 @@ const Input: React.FC<{
         trigger: () => void
     ) => (char: Char) => { style: React.CSSProperties; char?: Char })[];
 }> = ({ modifiers }) => {
-    const [str, setStr] = useAtom(strA);
+    const divRef = useRef<HTMLDivElement>(null);
 
-    const [divRef, onSelect] = useOnSelect();
+    const str = useAtomValue(strA);
+
+    const onSelect = useOnSelect(divRef);
 
     const onInput = useCallback((evt: React.FormEvent<HTMLDivElement>) => {
         console.log(evt.currentTarget.textContent);
@@ -42,13 +44,7 @@ const Input: React.FC<{
             onFocus={onFocus}
         >
             {str.charList.map((c, i) => (
-                <span
-                    key={i}
-                    className=" whitespace-pre"
-                    // style={
-                    //     i === 0 ? { height: 0, width: 0, fontSize: 0 } : void 0
-                    // }
-                >
+                <span key={i} className=" whitespace-pre">
                     {c.value}
                 </span>
             ))}
